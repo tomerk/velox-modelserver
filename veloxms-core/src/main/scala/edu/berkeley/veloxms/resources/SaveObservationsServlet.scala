@@ -5,7 +5,7 @@ import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import com.codahale.metrics.Timer
 import dispatch._
 import edu.berkeley.veloxms._
-import edu.berkeley.veloxms.resources.internal.HDFSLocation
+import edu.berkeley.veloxms.cluster.HDFSLocation
 import edu.berkeley.veloxms.util.Logging
 
 import scala.concurrent.Await
