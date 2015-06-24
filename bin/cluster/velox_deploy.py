@@ -186,7 +186,7 @@ def launch_ec2_cluster(cluster_name,
                        spot_price=None,
                        instance_type='r3.2xlarge',
                        ami=VELOX_HVM_AMI,
-                       keystone_commit="master"):
+                       keystone_commit="a8cbf141697b291a126feda278e25e8edb852407"):
     if env.key_filename is None:
         abort("Please provide a valid keypair file: export VELOX_CLUSTER_KEY=...")
     if EC2_INSTANCE_TYPES[instance_type] == 'pvm' and ami == VELOX_HVM_AMI:
@@ -308,7 +308,7 @@ def set_hostnames():
 
 
 @task
-def install_velox_local(etcd_loc, keystone_git_hash="master"):
+def install_velox_local(etcd_loc, keystone_git_hash="a8cbf141697b291a126feda278e25e8edb852407"):
     velox_root_dir = os.path.abspath("../..") # this script is in velox-modelserver/bin/cluster
     server_ips = ["127.0.0.1"]
     env.roledefs['servers'] = server_ips
@@ -364,7 +364,7 @@ def install_etcd_local(etcd_loc, platform):
 
 @task
 @parallel
-def build_velox(git_remote, branch, keystone_git_hash="master"):
+def build_velox(git_remote, branch, keystone_git_hash="a8cbf141697b291a126feda278e25e8edb852407"):
     with hide('stdout', 'stderr'):
         with settings(warn_only=True):
             if run("test -d ~/velox-modelserver").failed:
