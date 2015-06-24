@@ -9,7 +9,6 @@ import akka.util.Timeout
 import edu.berkeley.veloxms._
 import edu.berkeley.veloxms.cluster.{ModelPartitionManager, ActorSystemManager}
 import edu.berkeley.veloxms.models.Model
-import edu.berkeley.veloxms.resources.internal.ModelPartitionManager
 import edu.berkeley.veloxms.util.EtcdClient
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

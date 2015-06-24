@@ -7,7 +7,6 @@ import edu.berkeley.veloxms.background.{BatchRetrainManager, OnlineUpdateManager
 import edu.berkeley.veloxms.cluster.{ModelPartitionManager, ActorSystemManager}
 import edu.berkeley.veloxms.models._
 import edu.berkeley.veloxms.resources._
-import edu.berkeley.veloxms.resources.internal._
 import edu.berkeley.veloxms.storage._
 import edu.berkeley.veloxms.util._
 import io.dropwizard.{Application, Configuration}
@@ -15,7 +14,6 @@ import io.dropwizard.setup.{Bootstrap, Environment}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.eclipse.jetty.servlet.ServletHolder
 
-import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.reflect.runtime.{universe => ru}
 import com.fasterxml.jackson.databind.JsonNode
