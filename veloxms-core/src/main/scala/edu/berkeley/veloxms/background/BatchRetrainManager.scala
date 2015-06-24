@@ -3,23 +3,24 @@ package edu.berkeley.veloxms.background
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
+import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
-
 import edu.berkeley.veloxms._
-import edu.berkeley.veloxms.cluster.{ModelPartitionManager, ActorSystemManager}
+import edu.berkeley.veloxms.cluster.ModelPartitionManager
 import edu.berkeley.veloxms.models.Model
 import edu.berkeley.veloxms.util.EtcdClient
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 class BatchRetrainManager[T](
     model: Model[T],
     hostPartitionMap: Seq[String],
     etcdClient: EtcdClient,
+    system: ActorSystem,
     sparkContext: SparkContext,
     sparkDataLocation: String,
     delay: Long,
@@ -27,7 +28,7 @@ class BatchRetrainManager[T](
   extends BackgroundTask(delay, unit) {
 
   implicit val timeout = Timeout(5 hours)
-  import ActorSystemManager.system._
+  import system._
 
   override protected def execute(): Unit = batchTrain()
 
@@ -51,8 +52,8 @@ class BatchRetrainManager[T](
     var retrainResult = ""
     // Really should load whatever port is in application.conf
     val veloxPort = 2552
-    val actorPaths = hostPartitionMap.map(host => s"akka.tcp://${ActorSystemManager.systemName}@$host:$veloxPort/user/$modelName")
-    val partitionManagers = actorPaths.map(path => ActorSystemManager.system.actorSelection(path))
+    val actorPaths = hostPartitionMap.map(host => s"akka.tcp://${system.name}@$host:$veloxPort/user/$modelName")
+    val partitionManagers = actorPaths.map(path => system.actorSelection(path))
 
     // coordinate retraining: returns false if retrain already going on
     logInfo(s"Starting retrain for model $modelName")

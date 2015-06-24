@@ -2,9 +2,11 @@ package edu.berkeley.veloxms
 
 import java.util.concurrent.TimeUnit
 
+import akka.actor.ActorSystem
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.typesafe.config.ConfigFactory
 import edu.berkeley.veloxms.background.{BatchRetrainManager, OnlineUpdateManager}
-import edu.berkeley.veloxms.cluster.{ModelPartitionManager, ActorSystemManager}
+import edu.berkeley.veloxms.cluster.ModelPartitionManager
 import edu.berkeley.veloxms.models._
 import edu.berkeley.veloxms.resources._
 import edu.berkeley.veloxms.storage._
@@ -47,6 +49,11 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
     val etcdClient = new EtcdClient(conf.hostname, 4001, conf.hostname, new DispatchUtil)
     try {
       val partitionMap: Seq[String] = getPartitionMap(etcdClient)
+
+      val actorSystemConfig = ConfigFactory.parseString("akka.remote.netty.tcp.hostname=\"" + conf.hostname + "\"")
+          .withFallback(ConfigFactory.load())
+      val actorSystem = ActorSystem("VeloxActorSystem")
+
       val sparkMaster = etcdClient.getValue(s"$configEtcdPath/sparkMaster")
       // Location for the spark cluster to write data to & from
       // Looks like hdfs://ec2-54-158-166-184.compute-1.amazonaws.com:9000/velox
@@ -67,6 +74,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
       val models = modelNames.foreach(name => createModel(name,
                                                       sparkContext,
                                                       etcdClient,
+                                                      actorSystem,
                                                       broadcastProvider,
                                                       sparkDataLocation,
                                                       partitionMap,
@@ -96,6 +104,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
   def createModel(name: String,
                   sparkContext: SparkContext,
                   etcdClient: EtcdClient,
+                  system: ActorSystem,
                   broadcastProvider: BroadcastProvider,
                   sparkDataLocation: String,
                   partitionMap: Seq[String],
@@ -140,6 +149,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
       batchRetrainDelay,
       sparkContext,
       etcdClient,
+      system,
       broadcastProvider,
       sparkDataLocation,
       partitionMap,
@@ -154,6 +164,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
       batchRetrainDelayInMillis: Long,
       sparkContext: SparkContext,
       etcdClient: EtcdClient,
+      system: ActorSystem,
       broadcastProvider: BroadcastProvider,
       sparkDataLocation: String,
       partitionMap: Seq[String],
@@ -165,6 +176,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
       model,
       partitionMap,
       etcdClient,
+      system,
       sparkContext,
       sparkDataLocation,
       batchRetrainDelayInMillis,
@@ -176,7 +188,7 @@ class VeloxApplication extends Application[VeloxConfiguration] with Logging {
       env.lifecycle().manage(batchRetrainManager)
     }
 
-    val modelPartitionManager = ActorSystemManager.system.actorOf(ModelPartitionManager.props(
+    val modelPartitionManager = system.actorOf(ModelPartitionManager.props(
       onlineUpdateManager,
       model,
       sparkContext,
